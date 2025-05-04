@@ -1,5 +1,164 @@
 import { useState, useEffect } from 'react';
 
+// CipherWheel component definition
+function CipherWheel({ shift, mode }) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  
+  // Calculate the positions of each letter on the wheel
+  const getPosition = (index, innerWheel = false) => {
+    const radius = innerWheel ? 120 : 180;
+    const angle = (index * (360 / 26)) * (Math.PI / 180);
+    const x = 250 + radius * Math.sin(angle);
+    const y = 250 - radius * Math.cos(angle);
+    return { x, y };
+  };
+
+  // Calculate the shifted letter
+  const getShiftedLetter = (index) => {
+    if (mode === 'encrypt') {
+      return alphabet[(index + shift) % 26];
+    } else {
+      return alphabet[(index - shift + 26) % 26];
+    }
+  };
+
+  // Draw connection lines for all letters
+  const connectionLines = alphabet.split('').map((_, i) => {
+    const outerPos = getPosition(i);
+    const shiftedIndex = mode === 'encrypt' 
+      ? (i + shift) % 26 
+      : (i - shift + 26) % 26;
+    const shiftedInnerPos = getPosition(shiftedIndex, true);
+    
+    return (
+      <g key={`line-${i}`}>
+        <line 
+          x1={outerPos.x} 
+          y1={outerPos.y} 
+          x2={shiftedInnerPos.x} 
+          y2={shiftedInnerPos.y} 
+          stroke="#3b82f6"
+          strokeWidth="1"
+          strokeDasharray="3,3"
+          opacity="0.4"
+        />
+      </g>
+    );
+  });
+
+  return (
+    <div className="w-full flex justify-center overflow-hidden">
+      <svg viewBox="0 0 500 500" className="w-full max-w-2xl">
+        {/* Background */}
+        <defs>
+          <radialGradient id="bgGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+            <stop offset="0%" stopColor="#dbeafe" />
+            <stop offset="100%" stopColor="#eff6ff" />
+          </radialGradient>
+        </defs>
+        <circle cx="250" cy="250" r="250" fill="url(#bgGradient)" />
+        
+        {/* Outer wheel (fixed) */}
+        <circle cx="250" cy="250" r="200" fill="none" stroke="#2563eb" strokeWidth="2" strokeDasharray="4,2" />
+        <circle cx="250" cy="250" r="180" fill="none" stroke="#2563eb" strokeWidth="1" />
+        
+        {/* Inner wheel (rotating) */}
+        <circle cx="250" cy="250" r="140" fill="#dbeafe" stroke="#2563eb" strokeWidth="1" opacity="0.7" />
+        <circle cx="250" cy="250" r="120" fill="none" stroke="#2563eb" strokeWidth="1" />
+        
+        {/* Connection lines */}
+        {connectionLines}
+        
+        {/* Outer wheel letters */}
+        {alphabet.split('').map((char, i) => {
+          const pos = getPosition(i);
+          return (
+            <g key={`outer-${i}`}>
+              <circle 
+                cx={pos.x} 
+                cy={pos.y} 
+                r="16" 
+                fill="#bfdbfe" 
+                stroke="#2563eb" 
+                strokeWidth="1.5"
+              />
+              <text 
+                x={pos.x} 
+                y={pos.y} 
+                textAnchor="middle" 
+                dominantBaseline="middle" 
+                fontSize="14" 
+                fontWeight="bold"
+                fill="#1e40af"
+              >
+                {char}
+              </text>
+            </g>
+          );
+        })}
+        
+        {/* Inner wheel letters - show all mapped letters */}
+        {alphabet.split('').map((_, i) => {
+          const pos = getPosition(i, true);
+          const shiftedLetter = getShiftedLetter(i);
+          return (
+            <g key={`inner-${i}`}>
+              <circle 
+                cx={pos.x} 
+                cy={pos.y} 
+                r="14" 
+                fill="#93c5fd" 
+                stroke="#2563eb" 
+                strokeWidth="1.5" 
+              />
+              <text 
+                x={pos.x} 
+                y={pos.y} 
+                textAnchor="middle" 
+                dominantBaseline="middle" 
+                fontSize="12" 
+                fontWeight="bold"
+                fill="#1e3a8a"
+              >
+                {shiftedLetter}
+              </text>
+            </g>
+          );
+        })}
+        
+        {/* Center decoration */}
+        <circle cx="250" cy="250" r="50" fill="url(#bgGradient)" stroke="#2563eb" strokeWidth="2" />
+        <circle cx="250" cy="250" r="40" fill="#3b82f6" />
+        <circle cx="250" cy="250" r="35" fill="#2563eb" />
+        <text 
+          x="250" 
+          y="250" 
+          textAnchor="middle" 
+          dominantBaseline="middle" 
+          fontSize="18" 
+          fontWeight="bold"
+          fill="white"
+        >
+          {shift}
+        </text>
+        
+        {/* Rotation indicator */}
+        <line 
+          x1="250" 
+          y1="250" 
+          x2="250" 
+          y2="70" 
+          stroke="#2563eb" 
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+        <circle cx="250" cy="70" r="8" fill="#2563eb" />
+      </svg>
+    </div>
+  );
+}
+
+// Main App component
 export default function App() {
   const [inputText, setInputText] = useState('HELLO WORLD');
   const [shift, setShift] = useState(3);
@@ -162,166 +321,8 @@ export default function App() {
       </div>
       
       <footer className="text-center text-gray-500 text-sm mt-4 mb-8">
-        Created by TechWithChef1t • Interactive Caesar Cipher Tool
+        Created by TechWithChef1t • 
       </footer>
-    </div>
-  );
-}
-
-function CipherWheel({ shift, mode }) {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  
-  // Calculate the positions of each letter on the wheel
-  const getPosition = (index, innerWheel = false) => {
-    const radius = innerWheel ? 120 : 180;
-    const angle = (index * (360 / 26)) * (Math.PI / 180);
-    const x = 250 + radius * Math.sin(angle);
-    const y = 250 - radius * Math.cos(angle);
-    return { x, y };
-  };
-
-  // Calculate the shifted letter
-  const getShiftedLetter = (index) => {
-    if (mode === 'encrypt') {
-      return alphabet[(index + shift) % 26];
-    } else {
-      return alphabet[(index - shift + 26) % 26];
-    }
-  };
-
-  // Draw connection lines for all letters
-  const connectionLines = alphabet.split('').map((_, i) => {
-    const outerPos = getPosition(i);
-    const innerPos = getPosition(i, true);
-    const shiftedIndex = mode === 'encrypt' 
-      ? (i + shift) % 26 
-      : (i - shift + 26) % 26;
-    const shiftedInnerPos = getPosition(shiftedIndex, true);
-    
-    return (
-      <g key={`line-${i}`}>
-        <line 
-          x1={outerPos.x} 
-          y1={outerPos.y} 
-          x2={shiftedInnerPos.x} 
-          y2={shiftedInnerPos.y} 
-          stroke="#3b82f6"
-          strokeWidth="1"
-          strokeDasharray="3,3"
-          opacity="0.4"
-        />
-      </g>
-    );
-  });
-
-  return (
-    <div className="w-full flex justify-center overflow-hidden">
-      <svg viewBox="0 0 500 500" className="w-full max-w-2xl">
-        {/* Background */}
-        <defs>
-          <radialGradient id="bgGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-            <stop offset="0%" stopColor="#dbeafe" />
-            <stop offset="100%" stopColor="#eff6ff" />
-          </radialGradient>
-        </defs>
-        <circle cx="250" cy="250" r="250" fill="url(#bgGradient)" />
-        
-        {/* Outer wheel (fixed) */}
-        <circle cx="250" cy="250" r="200" fill="none" stroke="#2563eb" strokeWidth="2" strokeDasharray="4,2" />
-        <circle cx="250" cy="250" r="180" fill="none" stroke="#2563eb" strokeWidth="1" />
-        
-        {/* Inner wheel (rotating) */}
-        <circle cx="250" cy="250" r="140" fill="#dbeafe" stroke="#2563eb" strokeWidth="1" opacity="0.7" />
-        <circle cx="250" cy="250" r="120" fill="none" stroke="#2563eb" strokeWidth="1" />
-        
-        {/* Connection lines */}
-        {connectionLines}
-        
-        {/* Outer wheel letters */}
-        {alphabet.split('').map((char, i) => {
-          const pos = getPosition(i);
-          return (
-            <g key={`outer-${i}`}>
-              <circle 
-                cx={pos.x} 
-                cy={pos.y} 
-                r="16" 
-                fill="#bfdbfe" 
-                stroke="#2563eb" 
-                strokeWidth="1.5"
-              />
-              <text 
-                x={pos.x} 
-                y={pos.y} 
-                textAnchor="middle" 
-                dominantBaseline="middle" 
-                fontSize="14" 
-                fontWeight="bold"
-                fill="#1e40af"
-              >
-                {char}
-              </text>
-            </g>
-          );
-        })}
-        
-        {/* Inner wheel letters - show all mapped letters */}
-        {alphabet.split('').map((_, i) => {
-          const pos = getPosition(i, true);
-          const shiftedLetter = getShiftedLetter(i);
-          return (
-            <g key={`inner-${i}`}>
-              <circle 
-                cx={pos.x} 
-                cy={pos.y} 
-                r="14" 
-                fill="#93c5fd" 
-                stroke="#2563eb" 
-                strokeWidth="1.5" 
-              />
-              <text 
-                x={pos.x} 
-                y={pos.y} 
-                textAnchor="middle" 
-                dominantBaseline="middle" 
-                fontSize="12" 
-                fontWeight="bold"
-                fill="#1e3a8a"
-              >
-                {shiftedLetter}
-              </text>
-            </g>
-          );
-        })}
-        
-        {/* Center decoration */}
-        <circle cx="250" cy="250" r="50" fill="url(#bgGradient)" stroke="#2563eb" strokeWidth="2" />
-        <circle cx="250" cy="250" r="40" fill="#3b82f6" />
-        <circle cx="250" cy="250" r="35" fill="#2563eb" />
-        <text 
-          x="250" 
-          y="250" 
-          textAnchor="middle" 
-          dominantBaseline="middle" 
-          fontSize="18" 
-          fontWeight="bold"
-          fill="white"
-        >
-          {shift}
-        </text>
-        
-        {/* Rotation indicator */}
-        <line 
-          x1="250" 
-          y1="250" 
-          x2="250" 
-          y2="70" 
-          stroke="#2563eb" 
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-        <circle cx="250" cy="70" r="8" fill="#2563eb" />
-      </svg>
     </div>
   );
 }
